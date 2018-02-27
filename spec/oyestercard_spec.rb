@@ -4,6 +4,11 @@ describe Oyestercard do
 
   maximum_balance = Oyestercard::MAXIMUM_BALANCE
   minimum_fare = Oyestercard::MINIMUM_FARE
+
+  before (:each) do
+    @fake_station = double
+  end
+
   it 'has a balance of zero' do
     expect(subject.balance).to eq(0)
   end
@@ -12,16 +17,17 @@ describe Oyestercard do
     it 'responds to top_up method' do
       expect(subject).to respond_to(:top_up).with(1).argument
     end
+
+    it 'top up the balance' do
+      expect { subject.top_up(1) }.to change { subject.balance }.by(1)
+    end
+    it 'raise an error when try to top_up more then balance limit' do
+      subject.top_up(maximum_balance)
+      expect{ subject.top_up 1 }.to raise_error " Maximum balance of #{maximum_balance} exceeded "
+    end
   end
 
-  it 'top up the balance' do
-    expect { subject.top_up(1) }.to change { subject.balance }.by(1)
-  end
-  it 'raise an error when try to top_up more then balance limit' do
-    subject.top_up(maximum_balance)
-    expect{ subject.top_up 1 }.to raise_error " Maximum balance of #{maximum_balance} exceeded "
-  end
-  # because we set deduct method to br private, we dont need to test this method anymore and we should remove it
+  # because we set deduct method to be private, we dont need to test this method anymore and we should remove it
   # describe "#deduct" do
   #   it 'responds to deduct method' do
   #     expect(subject).to respond_to(:deduct).with(1).argument
@@ -38,10 +44,14 @@ describe Oyestercard do
     end
     it 'shows the status when you touch in' do
       subject.top_up(minimum_fare)
-      expect{ subject.touch_in }.to change { subject.journey_status }.to(:in_transit)
+      expect{ subject.touch_in(@fake_station) }.to change { subject.entry_station }.to(@fake_station)
     end
     it 'checking minimum balance on touch in' do
-      expect{ subject.touch_in }.to raise_error "you dont have enough credit"
+      expect{ subject.touch_in(@fake_station) }.to raise_error "you dont have enough credit"
+    end
+    it 'save entry station' do
+      subject.top_up(minimum_fare)
+      expect{ subject.touch_in(@fake_station) }.to change { subject.entry_station }.from(nil).to eq(@fake_station)
     end
   end
 
@@ -51,8 +61,8 @@ describe Oyestercard do
     end
     it 'shows the status when you touch_out' do
       subject.top_up(minimum_fare)
-      subject.touch_in
-      expect{ subject.touch_out }.to change { subject.journey_status }.to(:not_in_transit)
+      subject.touch_in(@fake_station)
+      expect{ subject.touch_out }.to change { subject.entry_station }.to(nil)
     end
     it 'charging for the journey' do
       expect{ subject.touch_out }.to change { subject.balance }.by(-minimum_fare)
@@ -65,7 +75,7 @@ describe Oyestercard do
     end
     it 'shows the status when you are in journey' do
       subject.top_up(minimum_fare)
-      subject.touch_in
+      subject.touch_in(@fake_station)
       expect(subject.in_journey?).to eq(true)
     end
     it 'shows the status when you are not in journey' do
@@ -73,6 +83,4 @@ describe Oyestercard do
       expect(subject.in_journey?).to eq(false)
     end
   end
-
-
 end
