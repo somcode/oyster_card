@@ -7,10 +7,19 @@ describe Oyestercard do
 
   before (:each) do
     @fake_station = double
+    @fake_station2 = double
   end
 
-  it 'has a balance of zero' do
-    expect(subject.balance).to eq(0)
+  describe "#balance" do
+    it 'has a balance of zero' do
+      expect(subject.balance).to eq(0)
+    end
+  end
+
+  describe "#journey_history" do
+    it 'check the card has an empty list of journey' do
+      expect(subject.journey_history).to eq []
+    end
   end
 
   describe "#top_up" do
@@ -62,12 +71,25 @@ describe Oyestercard do
     it 'shows the status when you touch_out' do
       subject.top_up(minimum_fare)
       subject.touch_in(@fake_station)
-      expect{ subject.touch_out }.to change { subject.entry_station }.to(nil)
+      expect{ subject.touch_out(@fake_station2) }.to change { subject.entry_station }.to(nil)
     end
     it 'charging for the journey' do
-      expect{ subject.touch_out }.to change { subject.balance }.by(-minimum_fare)
+      expect{ subject.touch_out(@fake_station2) }.to change { subject.balance }.by(-minimum_fare)
+    end
+    it 'reset entry station' do
+      subject.top_up(minimum_fare)
+      subject.touch_in(@fake_station)
+      expect{ subject.touch_out(@fake_station2) }.to change { subject.entry_station }.from(@fake_station).to eq(nil)
+    end
+    it 'should add journey history' do
+      subject.top_up(minimum_fare)
+      subject.touch_in(@fake_station)
+      subject.touch_out(@fake_station2)
+      expect(subject.journey_history[0][:journey_start]).to eq(@fake_station)
+      expect(subject.journey_history[0][:journey_stop]).to eq(@fake_station2)
     end
   end
+
 
   describe "#in_journey?" do
     it 'responds to in_journey?' do
@@ -79,7 +101,7 @@ describe Oyestercard do
       expect(subject.in_journey?).to eq(true)
     end
     it 'shows the status when you are not in journey' do
-      subject.touch_out
+      subject.touch_out(@fake_station2)
       expect(subject.in_journey?).to eq(false)
     end
   end
