@@ -4,6 +4,7 @@ class Oyestercard
   MAXIMUM_BALANCE = 90
   MINIMUM_FARE = 1
 
+
   def initialize
     @balance = 0
     @journey_status = :not_in_transit
