@@ -1,31 +1,37 @@
 class Oyestercard
 
-  attr_reader :balance, :journey_status
+  attr_reader :balance, :entry_station, :exit_station, :journey_list
   MAXIMUM_BALANCE = 90
   MINIMUM_FARE = 1
 
+
   def initialize
     @balance = 0
-    @journey_status = :not_in_transit
+    @entry_station = nil
+    @exit_station = nil
+    @journey_list = []
+
   end
 
   def top_up(amount)
-    raise " Maximum balance of #{MAXIMUM_BALANCE} exceeded " if @balance + amount > MAXIMUM_BALANCE
+    raise " Maximum balance of #{MAXIMUM_BALANCE} exceeded " if balance + amount > MAXIMUM_BALANCE
     @balance += amount
   end
 
-  def touch_in
-    raise "you dont have enough credit" if @balance < MINIMUM_FARE
-    @journey_status = :in_transit
+  def touch_in(station)
+    raise "you dont have enough credit" if balance < MINIMUM_FARE
+    @entry_station = station
   end
 
-  def touch_out
+  def touch_out(station)
     deduct(MINIMUM_FARE)
-    @journey_status = :not_in_transit
+    @exit_station = station
+    @journey_list << { entry: entry_station, exit: exit_station }
+    @entry_station = nil
   end
 
   def in_journey?
-    journey_status == :in_transit
+    entry_station != nil
   end
 
   private
